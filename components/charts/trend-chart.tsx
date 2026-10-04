@@ -44,7 +44,7 @@ export function TrendChart({ data }: { data: MonthRow[] }) {
   return (
     <div className="h-64 w-full rounded-xl border p-2">
       <ResponsiveContainer width="100%" height="100%">
-        <ComposedChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+        <ComposedChart data={data} margin={{ top: 20, right: 8, left: 0, bottom: 0 }}>
           <CartesianGrid vertical={false} strokeDasharray="0" stroke="var(--border)" />
           <XAxis
             dataKey="month"
@@ -101,6 +101,27 @@ export function TrendChart({ data }: { data: MonthRow[] }) {
             stroke={CHART_COLORS.net}
             strokeWidth={2}
             dot={{ r: 4, fill: CHART_COLORS.net }}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            label={(props: any) => {
+              const x = Number(props.x);
+              const y = Number(props.y);
+              const value = Number(props.value);
+              if (Number.isNaN(x) || Number.isNaN(y) || Number.isNaN(value)) return <g />;
+              const sign = value > 0 ? "+" : "";
+              return (
+                <text
+                  x={x}
+                  y={y - 10}
+                  textAnchor="middle"
+                  fontSize={11}
+                  fontWeight={600}
+                  fill={value < 0 ? CHART_COLORS.expense : "var(--foreground)"}
+                >
+                  {sign}
+                  {formatCompactNumber(value)}
+                </text>
+              );
+            }}
           />
         </ComposedChart>
       </ResponsiveContainer>

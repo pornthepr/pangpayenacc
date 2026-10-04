@@ -39,6 +39,22 @@ export default async function TransactionsPage({
 
   const groups = Array.from(groupsByDate.values());
 
+  // Month headers above the day groups, so a long filtered list still reads
+  // at a glance (รับ/จ่าย/เหลือ per month) without scrolling through every day.
+  const monthGroupsByKey = new Map<
+    string,
+    { monthKey: string; income: number; expense: number; days: typeof groups }
+  >();
+  for (const day of groups) {
+    const monthKey = `${day.date.slice(0, 7)}-01`;
+    const existing = monthGroupsByKey.get(monthKey) ?? { monthKey, income: 0, expense: 0, days: [] };
+    existing.income += day.income;
+    existing.expense += day.expense;
+    existing.days.push(day);
+    monthGroupsByKey.set(monthKey, existing);
+  }
+  const monthGroups = Array.from(monthGroupsByKey.values());
+
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between p-4 pb-0">
@@ -56,7 +72,7 @@ export default async function TransactionsPage({
           description="แตะปุ่ม + ด้านล่างเพื่อบันทึกรายรับ รายจ่าย หรือโอนเงินรายการแรก"
         />
       ) : (
-        <TransactionList groups={groups} />
+        <TransactionList monthGroups={monthGroups} />
       )}
     </div>
   );

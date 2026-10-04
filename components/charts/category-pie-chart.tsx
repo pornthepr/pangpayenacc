@@ -32,7 +32,7 @@ export function CategoryPieChart({
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="h-56 w-full">
+      <div className="h-40 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
@@ -40,7 +40,7 @@ export function CategoryPieChart({
               dataKey="amount"
               nameKey="name"
               innerRadius="45%"
-              outerRadius="80%"
+              outerRadius="90%"
               paddingAngle={2}
               onClick={(entry: { payload?: BreakdownRow }) =>
                 entry.payload && handleClick(entry.payload)
@@ -67,17 +67,17 @@ export function CategoryPieChart({
         </ResponsiveContainer>
       </div>
 
-      <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+      <div className="flex flex-col gap-1">
         {data.map((row) => (
           <button
             key={row.categoryId ?? "other"}
             type="button"
             onClick={() => handleClick(row)}
-            className="flex items-center gap-1.5 text-sm"
+            className="flex items-center gap-1.5 text-left text-xs"
           >
-            <span className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: row.color }} />
-            <span>{row.name}</span>
-            <span className="text-muted-foreground">{row.percentage}%</span>
+            <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: row.color }} />
+            <span className="min-w-0 flex-1 truncate">{row.name}</span>
+            <span className="shrink-0 text-muted-foreground">{row.percentage}%</span>
           </button>
         ))}
       </div>

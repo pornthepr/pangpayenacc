@@ -4,7 +4,7 @@ import { useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { formatMoney } from "@/lib/format/money";
-import { formatThaiDateLong } from "@/lib/format/date";
+import { formatThaiDateLong, formatThaiMonthYear } from "@/lib/format/date";
 import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/lib/supabase/database.types";
 import { useAppData } from "@/components/transactions/app-data-context";
@@ -20,7 +20,14 @@ interface DayGroup {
   expense: number;
 }
 
-export function TransactionList({ groups }: { groups: DayGroup[] }) {
+interface MonthGroup {
+  monthKey: string;
+  income: number;
+  expense: number;
+  days: DayGroup[];
+}
+
+export function TransactionList({ monthGroups }: { monthGroups: MonthGroup[] }) {
   const router = useRouter();
   const { accounts, categories, profiles, quickAdd } = useAppData();
 
@@ -62,25 +69,37 @@ export function TransactionList({ groups }: { groups: DayGroup[] }) {
 
   return (
     <div className="flex flex-col">
-      {groups.map((group) => (
-        <div key={group.date}>
-          <div className="flex items-baseline justify-between bg-muted/50 px-4 py-2 text-sm">
-            <span className="font-medium">{formatThaiDateLong(group.date)}</span>
-            <span className="text-muted-foreground">
-              +{formatMoney(group.income)} / -{formatMoney(group.expense)}
+      {monthGroups.map((month) => (
+        <div key={month.monthKey}>
+          <div className="flex flex-col gap-0.5 bg-muted px-4 py-2">
+            <span className="font-semibold">{formatThaiMonthYear(month.monthKey)}</span>
+            <span className="text-sm text-muted-foreground">
+              รับ {formatMoney(month.income)} · จ่าย {formatMoney(month.expense)} · เหลือ{" "}
+              {formatMoney(month.income - month.expense)}
             </span>
           </div>
-          {group.transactions.map((transaction) => (
-            <TransactionRow
-              key={transaction.id}
-              transaction={transaction}
-              accountsById={accountsById}
-              categoriesById={categoriesById}
-              profilesById={profilesById}
-              onEdit={() => quickAdd.openEdit(transaction)}
-              onDelete={() => handleDelete(transaction)}
-              onTap={() => router.push(`/transactions/${transaction.id}`)}
-            />
+
+          {month.days.map((group) => (
+            <div key={group.date}>
+              <div className="flex items-baseline justify-between bg-muted/50 px-4 py-2 text-sm">
+                <span className="font-medium">{formatThaiDateLong(group.date)}</span>
+                <span className="text-muted-foreground">
+                  +{formatMoney(group.income)} / -{formatMoney(group.expense)}
+                </span>
+              </div>
+              {group.transactions.map((transaction) => (
+                <TransactionRow
+                  key={transaction.id}
+                  transaction={transaction}
+                  accountsById={accountsById}
+                  categoriesById={categoriesById}
+                  profilesById={profilesById}
+                  onEdit={() => quickAdd.openEdit(transaction)}
+                  onDelete={() => handleDelete(transaction)}
+                  onTap={() => router.push(`/transactions/${transaction.id}`)}
+                />
+              ))}
+            </div>
           ))}
         </div>
       ))}

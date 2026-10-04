@@ -80,7 +80,7 @@ export function SwipeableRow({
         onPointerUp={handlePointerUp}
         onClick={handleClick}
         style={{ transform: `translateX(${translateX}px)` }}
-        className="relative touch-pan-y select-none bg-background transition-transform"
+        className="relative cursor-pointer touch-pan-y select-none bg-background transition-transform hover:bg-muted/50"
       >
         {children}
       </div>

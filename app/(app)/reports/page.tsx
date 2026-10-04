@@ -1,9 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { resolvePeriod, type PeriodPreset } from "@/lib/format/period";
-import { bangkokMonthBounds } from "@/lib/format/date";
+import { bangkokMonthBounds, adjacentMonthKeys } from "@/lib/format/date";
 import { bucketSmallCategories } from "@/lib/format/breakdown";
 import { CategoryPieChart } from "@/components/charts/category-pie-chart";
 import { MonthlyLineChart } from "@/components/charts/monthly-line-chart";
+import { MonthlyCompareBarChart } from "@/components/charts/monthly-compare-bar-chart";
 import { ContributionsChart } from "@/components/charts/contributions-chart";
 import { CompareMonthChart } from "@/components/charts/compare-month-chart";
 import { PeriodSelector } from "./period-selector";
@@ -19,6 +20,14 @@ export default async function ReportsPage({
     preset,
     params.from && params.to ? { from: params.from, to: params.to } : undefined
   );
+  // "เดือนนี้"/"เดือนก่อน" only ever span one calendar month, which makes a
+  // *line* pointless (one data point can't show a trend) — compare it against
+  // the preceding month as grouped bars instead, with each month's closing
+  // balance shown alongside.
+  const isSingleMonth = preset === "this_month" || preset === "last_month";
+  const { prevKey, nextKey } = adjacentMonthKeys(from);
+  const prevMonthBounds = bangkokMonthBounds(prevKey);
+  const nextMonthStart = bangkokMonthBounds(nextKey).from;
 
   const { from: currentMonthFrom, to: currentMonthTo } = bangkokMonthBounds();
   const { from: prevMonthFrom, to: prevMonthTo } = resolvePeriod("last_month");
@@ -31,6 +40,9 @@ export default async function ReportsPage({
     { data: contributions },
     { data: currentMonthBreakdown },
     { data: prevMonthBreakdown },
+    { data: compareTrend },
+    { data: balanceBeforeSelected },
+    { data: balanceBeforeNext },
   ] = await Promise.all([
     supabase.rpc("rpc_category_breakdown", { p_from: from, p_to: to, p_type: "expense" }),
     supabase.rpc("rpc_category_breakdown", { p_from: from, p_to: to, p_type: "income" }),
@@ -38,7 +50,21 @@ export default async function ReportsPage({
     supabase.rpc("rpc_contributions", { p_from: from, p_to: to }),
     supabase.rpc("rpc_category_breakdown", { p_from: currentMonthFrom, p_to: currentMonthTo, p_type: "expense" }),
     supabase.rpc("rpc_category_breakdown", { p_from: prevMonthFrom, p_to: prevMonthTo, p_type: "expense" }),
+    isSingleMonth
+      ? supabase.rpc("rpc_monthly_summary", { p_from: prevMonthBounds.from, p_to: to })
+      : Promise.resolve({ data: null }),
+    isSingleMonth ? supabase.rpc("rpc_balance_before", { p_date: from }) : Promise.resolve({ data: null }),
+    isSingleMonth
+      ? supabase.rpc("rpc_balance_before", { p_date: nextMonthStart })
+      : Promise.resolve({ data: null }),
   ]);
+
+  const monthlyCompareData = (compareTrend ?? []).map((row) => ({
+    month: row.month,
+    income: row.income,
+    expense: row.expense,
+    balance: row.month === from ? (balanceBeforeNext ?? 0) : (balanceBeforeSelected ?? 0),
+  }));
 
   const expenseRows = bucketSmallCategories(expenseBreakdown ?? []);
   const incomeRows = bucketSmallCategories(incomeBreakdown ?? []);
@@ -74,18 +100,24 @@ export default async function ReportsPage({
 
       <section className="flex flex-col gap-2">
         <h2 className="font-medium">แนวโน้มรายเดือน</h2>
-        <MonthlyLineChart data={monthlyTrend ?? []} />
+        {isSingleMonth ? (
+          <MonthlyCompareBarChart data={monthlyCompareData} />
+        ) : (
+          <MonthlyLineChart data={monthlyTrend ?? []} />
+        )}
       </section>
 
-      <section className="flex flex-col gap-2">
-        <h2 className="font-medium">จ่ายตามหมวด</h2>
-        <CategoryPieChart data={expenseRows} type="expense" from={from} to={to} />
-      </section>
+      <div className="grid grid-cols-2 gap-3">
+        <section className="flex flex-col gap-2">
+          <h2 className="font-medium">จ่ายตามหมวด</h2>
+          <CategoryPieChart data={expenseRows} type="expense" from={from} to={to} />
+        </section>
 
-      <section className="flex flex-col gap-2">
-        <h2 className="font-medium">รับตามหมวด</h2>
-        <CategoryPieChart data={incomeRows} type="income" from={from} to={to} />
-      </section>
+        <section className="flex flex-col gap-2">
+          <h2 className="font-medium">รับตามหมวด</h2>
+          <CategoryPieChart data={incomeRows} type="income" from={from} to={to} />
+        </section>
+      </div>
 
       <section className="flex flex-col gap-2">
         <h2 className="font-medium">เงินสมทบรายคน</h2>
