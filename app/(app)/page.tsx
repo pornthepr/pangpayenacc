@@ -32,6 +32,7 @@ export default async function DashboardPage({
     { data: balances },
     { data: monthSummary },
     { data: trend },
+    { data: trendBalance },
     { data: recentTransactions },
     { data: categories },
     { data: earliestTransaction },
@@ -41,6 +42,7 @@ export default async function DashboardPage({
     supabase.from("v_account_balances").select("*"),
     supabase.rpc("rpc_monthly_summary", { p_from: from, p_to: to }),
     supabase.rpc("rpc_monthly_summary", { p_from: trendFrom, p_to: todayBounds.to }),
+    supabase.rpc("rpc_monthly_balance", { p_from: trendFrom, p_to: todayBounds.to }),
     supabase
       .from("transactions")
       .select("*")
@@ -68,6 +70,17 @@ export default async function DashboardPage({
   const carryForward = carryForwardRaw ?? 0;
   const firstMonthKey = earliestTransaction?.occurred_on.slice(0, 7);
   const isFirstMonth = !firstMonthKey || from.slice(0, 7) <= firstMonthKey;
+  const balanceByMonth = new Map((trendBalance ?? []).map((row) => [row.month, row.balance]));
+  const trendWithBalance = (trend ?? [])
+    // Months before the family's very first transaction never had any real
+    // history — cut them instead of charting a flat pre-ledger balance.
+    .filter((row) => !firstMonthKey || row.month.slice(0, 7) >= firstMonthKey)
+    .map((row) => ({
+      month: row.month,
+      income: row.income,
+      expense: row.expense,
+      balance: balanceByMonth.get(row.month) ?? 0,
+    }));
 
   return (
     <div className="flex flex-col gap-4 p-4">
@@ -141,7 +154,7 @@ export default async function DashboardPage({
 
           <div className="flex flex-col gap-2">
             <h2 className="font-medium">แนวโน้มรับ-จ่าย</h2>
-            <TrendChart data={trend ?? []} />
+            <TrendChart data={trendWithBalance} />
           </div>
 
           <div className="flex flex-col gap-2">

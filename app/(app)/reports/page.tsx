@@ -43,6 +43,8 @@ export default async function ReportsPage({
     { data: compareTrend },
     { data: balanceBeforeSelected },
     { data: balanceBeforeNext },
+    { data: monthlyBalance },
+    { data: earliestTransaction },
   ] = await Promise.all([
     supabase.rpc("rpc_category_breakdown", { p_from: from, p_to: to, p_type: "expense" }),
     supabase.rpc("rpc_category_breakdown", { p_from: from, p_to: to, p_type: "income" }),
@@ -57,14 +59,39 @@ export default async function ReportsPage({
     isSingleMonth
       ? supabase.rpc("rpc_balance_before", { p_date: nextMonthStart })
       : Promise.resolve({ data: null }),
+    isSingleMonth
+      ? Promise.resolve({ data: null })
+      : supabase.rpc("rpc_monthly_balance", { p_from: from, p_to: to }),
+    supabase
+      .from("transactions")
+      .select("occurred_on")
+      .order("occurred_on", { ascending: true })
+      .limit(1)
+      .maybeSingle(),
   ]);
 
-  const monthlyCompareData = (compareTrend ?? []).map((row) => ({
-    month: row.month,
-    income: row.income,
-    expense: row.expense,
-    balance: row.month === from ? (balanceBeforeNext ?? 0) : (balanceBeforeSelected ?? 0),
-  }));
+  const firstMonthKey = earliestTransaction?.occurred_on.slice(0, 7);
+
+  // Months before the family's very first transaction never had any real
+  // history — cut them instead of charting a flat pre-ledger balance.
+  const monthlyCompareData = (compareTrend ?? [])
+    .filter((row) => !firstMonthKey || row.month.slice(0, 7) >= firstMonthKey)
+    .map((row) => ({
+      month: row.month,
+      income: row.income,
+      expense: row.expense,
+      balance: row.month === from ? (balanceBeforeNext ?? 0) : (balanceBeforeSelected ?? 0),
+    }));
+
+  const balanceByMonth = new Map((monthlyBalance ?? []).map((row) => [row.month, row.balance]));
+  const monthlyTrendWithBalance = (monthlyTrend ?? [])
+    .filter((row) => !firstMonthKey || row.month.slice(0, 7) >= firstMonthKey)
+    .map((row) => ({
+      month: row.month,
+      income: row.income,
+      expense: row.expense,
+      balance: balanceByMonth.get(row.month) ?? 0,
+    }));
 
   const expenseRows = bucketSmallCategories(expenseBreakdown ?? []);
   const incomeRows = bucketSmallCategories(incomeBreakdown ?? []);
@@ -103,7 +130,7 @@ export default async function ReportsPage({
         {isSingleMonth ? (
           <MonthlyCompareBarChart data={monthlyCompareData} />
         ) : (
-          <MonthlyLineChart data={monthlyTrend ?? []} />
+          <MonthlyLineChart data={monthlyTrendWithBalance} />
         )}
       </section>
 

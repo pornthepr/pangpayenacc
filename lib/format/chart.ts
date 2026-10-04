@@ -9,7 +9,7 @@ export function formatCompactNumber(value: number): string {
 export const CHART_COLORS = {
   income: "#16a34a",
   expense: "#dc2626",
-  net: "#3b82f6",
+  balance: "#3b82f6",
   transfer: "#6b7280",
   other: "#6b7280",
 } as const;

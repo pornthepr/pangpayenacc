@@ -205,6 +205,10 @@ export interface Database {
         Args: { p_from: string; p_to: string };
         Returns: { month: string; income: number; expense: number; net: number }[];
       };
+      rpc_monthly_balance: {
+        Args: { p_from: string; p_to: string };
+        Returns: { month: string; balance: number }[];
+      };
       rpc_category_breakdown: {
         Args: { p_from: string; p_to: string; p_type: string };
         Returns: {

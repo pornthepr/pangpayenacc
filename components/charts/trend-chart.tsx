@@ -20,7 +20,7 @@ interface MonthRow {
   month: string;
   income: number;
   expense: number;
-  net: number;
+  balance: number;
 }
 
 const monthLabelFormatter = new Intl.DateTimeFormat("th-TH", { month: "short" });
@@ -44,7 +44,7 @@ export function TrendChart({ data }: { data: MonthRow[] }) {
   return (
     <div className="h-64 w-full rounded-xl border p-2">
       <ResponsiveContainer width="100%" height="100%">
-        <ComposedChart data={data} margin={{ top: 20, right: 8, left: 0, bottom: 0 }}>
+        <ComposedChart data={data} margin={{ top: 20, right: 0, left: 0, bottom: 0 }}>
           <CartesianGrid vertical={false} strokeDasharray="0" stroke="var(--border)" />
           <XAxis
             dataKey="month"
@@ -60,6 +60,20 @@ export function TrendChart({ data }: { data: MonthRow[] }) {
             tickLine={false}
             width={40}
           />
+          {/* Closing balance is the running total across every account — far
+              larger than a single month's income/expense — so it gets its own
+              scale, on the right, instead of squashing the bars flat on a
+              shared axis. */}
+          <YAxis
+            yAxisId="balance"
+            orientation="right"
+            tickFormatter={formatCompactNumber}
+            tick={{ fontSize: 12, fill: CHART_COLORS.balance }}
+            axisLine={false}
+            tickLine={false}
+            width={44}
+            domain={["dataMin - 1", "dataMax + 1"]}
+          />
           <Tooltip
             formatter={(value) => formatMoney(Number(value))}
             labelFormatter={(label) => monthLabel(String(label))}
@@ -72,7 +86,7 @@ export function TrendChart({ data }: { data: MonthRow[] }) {
           />
           <Legend
             formatter={(value) =>
-              value === "income" ? "รับ" : value === "expense" ? "จ่าย" : "สุทธิ"
+              value === "income" ? "รับ" : value === "expense" ? "จ่าย" : "คงเหลือ"
             }
           />
           <Bar
@@ -96,18 +110,18 @@ export function TrendChart({ data }: { data: MonthRow[] }) {
             cursor="pointer"
           />
           <Line
+            yAxisId="balance"
             type="monotone"
-            dataKey="net"
-            stroke={CHART_COLORS.net}
+            dataKey="balance"
+            stroke={CHART_COLORS.balance}
             strokeWidth={2}
-            dot={{ r: 4, fill: CHART_COLORS.net }}
+            dot={{ r: 4, fill: CHART_COLORS.balance }}
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             label={(props: any) => {
               const x = Number(props.x);
               const y = Number(props.y);
               const value = Number(props.value);
               if (Number.isNaN(x) || Number.isNaN(y) || Number.isNaN(value)) return <g />;
-              const sign = value > 0 ? "+" : "";
               return (
                 <text
                   x={x}
@@ -117,7 +131,6 @@ export function TrendChart({ data }: { data: MonthRow[] }) {
                   fontWeight={600}
                   fill={value < 0 ? CHART_COLORS.expense : "var(--foreground)"}
                 >
-                  {sign}
                   {formatCompactNumber(value)}
                 </text>
               );
