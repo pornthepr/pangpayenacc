@@ -1,4 +1,4 @@
-export type AppUsername = "golf" | "gap" | "group";
+export type AppUsername = "golf" | "gap" | "group" | "mom";
 
 export interface AppUserDefinition {
   username: AppUsername;
@@ -6,12 +6,14 @@ export interface AppUserDefinition {
   color: string;
 }
 
-// The 3 fixed family members (requirement section 2). No sign-up, no invite —
-// adding a 4th person later means adding a row here plus re-running the seed script.
+// The fixed family members (requirement section 2, extended with "mom" on
+// request). No sign-up, no invite — adding another person later means adding
+// a row here plus re-running the seed script.
 export const APP_USERS: AppUserDefinition[] = [
   { username: "golf", displayName: "Golf", color: "#16a34a" },
   { username: "gap", displayName: "Gap", color: "#f97316" },
   { username: "group", displayName: "Group", color: "#9333ea" },
+  { username: "mom", displayName: "แม่ไก่", color: "#ec4899" },
 ];
 
 export function isAppUsername(value: string): value is AppUsername {

@@ -2,16 +2,16 @@ import { createClient } from "@/lib/supabase/server";
 import { resolvePeriod, type PeriodPreset } from "@/lib/format/period";
 import { bangkokMonthBounds } from "@/lib/format/date";
 import { bucketSmallCategories } from "@/lib/format/breakdown";
-import { CategoryBreakdownChart } from "@/components/charts/category-breakdown-chart";
+import { CategoryPieChart } from "@/components/charts/category-pie-chart";
+import { MonthlyLineChart } from "@/components/charts/monthly-line-chart";
 import { ContributionsChart } from "@/components/charts/contributions-chart";
 import { CompareMonthChart } from "@/components/charts/compare-month-chart";
 import { PeriodSelector } from "./period-selector";
-import { TypeToggle } from "./type-toggle";
 
 export default async function ReportsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ period?: string; from?: string; to?: string; breakdownType?: string }>;
+  searchParams: Promise<{ period?: string; from?: string; to?: string }>;
 }) {
   const params = await searchParams;
   const preset = (params.period as PeriodPreset) ?? "this_month";
@@ -19,25 +19,29 @@ export default async function ReportsPage({
     preset,
     params.from && params.to ? { from: params.from, to: params.to } : undefined
   );
-  const breakdownType = params.breakdownType === "income" ? "income" : "expense";
 
   const { from: currentMonthFrom, to: currentMonthTo } = bangkokMonthBounds();
   const { from: prevMonthFrom, to: prevMonthTo } = resolvePeriod("last_month");
 
   const supabase = await createClient();
   const [
-    { data: breakdown },
+    { data: expenseBreakdown },
+    { data: incomeBreakdown },
+    { data: monthlyTrend },
     { data: contributions },
     { data: currentMonthBreakdown },
     { data: prevMonthBreakdown },
   ] = await Promise.all([
-    supabase.rpc("rpc_category_breakdown", { p_from: from, p_to: to, p_type: breakdownType }),
+    supabase.rpc("rpc_category_breakdown", { p_from: from, p_to: to, p_type: "expense" }),
+    supabase.rpc("rpc_category_breakdown", { p_from: from, p_to: to, p_type: "income" }),
+    supabase.rpc("rpc_monthly_summary", { p_from: from, p_to: to }),
     supabase.rpc("rpc_contributions", { p_from: from, p_to: to }),
     supabase.rpc("rpc_category_breakdown", { p_from: currentMonthFrom, p_to: currentMonthTo, p_type: "expense" }),
     supabase.rpc("rpc_category_breakdown", { p_from: prevMonthFrom, p_to: prevMonthTo, p_type: "expense" }),
   ]);
 
-  const breakdownRows = bucketSmallCategories(breakdown ?? []);
+  const expenseRows = bucketSmallCategories(expenseBreakdown ?? []);
+  const incomeRows = bucketSmallCategories(incomeBreakdown ?? []);
 
   const compareMap = new Map<string, { categoryId: string; name: string; current: number; previous: number }>();
   for (const row of currentMonthBreakdown ?? []) {
@@ -69,11 +73,18 @@ export default async function ReportsPage({
       <PeriodSelector />
 
       <section className="flex flex-col gap-2">
-        <div className="flex items-center justify-between">
-          <h2 className="font-medium">จ่ายตามหมวด</h2>
-          <TypeToggle />
-        </div>
-        <CategoryBreakdownChart data={breakdownRows} type={breakdownType} from={from} to={to} />
+        <h2 className="font-medium">แนวโน้มรายเดือน</h2>
+        <MonthlyLineChart data={monthlyTrend ?? []} />
+      </section>
+
+      <section className="flex flex-col gap-2">
+        <h2 className="font-medium">จ่ายตามหมวด</h2>
+        <CategoryPieChart data={expenseRows} type="expense" from={from} to={to} />
+      </section>
+
+      <section className="flex flex-col gap-2">
+        <h2 className="font-medium">รับตามหมวด</h2>
+        <CategoryPieChart data={incomeRows} type="income" from={from} to={to} />
       </section>
 
       <section className="flex flex-col gap-2">

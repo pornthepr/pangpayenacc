@@ -2,22 +2,36 @@ import { formatMoney } from "@/lib/format/money";
 import { CHART_COLORS } from "@/lib/format/chart";
 
 export function MonthlySummaryStat({
+  carryForward,
+  carryForwardLabel,
   income,
   expense,
 }: {
+  carryForward: number;
+  carryForwardLabel: string;
   income: number;
   expense: number;
 }) {
-  const net = income - expense;
+  const closingBalance = carryForward + income - expense;
   const total = income + expense;
   const incomeShare = total > 0 ? (income / total) * 100 : 50;
 
   return (
     <div className="flex flex-col gap-3 rounded-xl border p-4">
+      <div className="flex items-center justify-between text-sm">
+        <span className="text-muted-foreground">{carryForwardLabel}</span>
+        <span className="font-medium">{formatMoney(carryForward)}</span>
+      </div>
+
       <div className="grid grid-cols-3 gap-2 text-center">
-        <Stat label="รับ" value={income} color={CHART_COLORS.income} />
-        <Stat label="จ่าย" value={expense} color={CHART_COLORS.expense} />
-        <Stat label="คงเหลือ" value={net} color={net >= 0 ? CHART_COLORS.income : CHART_COLORS.expense} />
+        <Stat label="รับ" value={income} sign="+" color={CHART_COLORS.income} />
+        <Stat label="จ่าย" value={expense} sign="-" color={CHART_COLORS.expense} />
+        <Stat
+          label="คงเหลือ"
+          value={Math.abs(closingBalance)}
+          sign={closingBalance < 0 ? "-" : ""}
+          color={closingBalance >= 0 ? undefined : CHART_COLORS.expense}
+        />
       </div>
 
       <div className="flex h-2 w-full overflow-hidden rounded-full bg-muted">
@@ -34,14 +48,26 @@ export function MonthlySummaryStat({
   );
 }
 
-function Stat({ label, value, color }: { label: string; value: number; color: string }) {
-  const sign = value > 0 ? "+" : value < 0 ? "-" : "";
+function Stat({
+  label,
+  value,
+  sign,
+  color,
+}: {
+  label: string;
+  value: number;
+  sign: "+" | "-" | "";
+  color?: string;
+}) {
   return (
-    <div className="flex flex-col">
+    <div className="flex min-w-0 flex-col">
       <span className="text-xs text-muted-foreground">{label}</span>
-      <span className="text-lg font-semibold" style={{ color }}>
-        {sign}
-        {formatMoney(Math.abs(value))}
+      <span
+        className="whitespace-nowrap text-sm font-semibold sm:text-base"
+        style={color ? { color } : undefined}
+      >
+        {value === 0 ? "" : sign}
+        {formatMoney(value)}
       </span>
     </div>
   );

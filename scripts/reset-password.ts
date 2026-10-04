@@ -12,6 +12,7 @@ const DEFAULT_PASSWORDS: Record<string, string> = {
   golf: "golf1234",
   gap: "gap1234",
   group: "group1234",
+  mom: "111111",
 };
 
 function requireEnv(name: string): string {
@@ -27,7 +28,7 @@ async function main() {
   const [username, passwordArg] = process.argv.slice(2);
 
   if (!username || !isAppUsername(username)) {
-    console.error("Usage: pnpm reset:password <golf|gap|group> [newPassword]");
+    console.error("Usage: pnpm reset:password <golf|gap|group|mom> [newPassword]");
     process.exit(1);
   }
 

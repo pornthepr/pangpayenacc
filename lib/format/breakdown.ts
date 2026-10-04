@@ -1,4 +1,10 @@
-import type { BreakdownRow } from "@/components/charts/category-breakdown-chart";
+export interface BreakdownRow {
+  categoryId: string | null;
+  name: string;
+  color: string;
+  amount: number;
+  percentage: number;
+}
 
 interface RawBreakdownRow {
   category_id: string;

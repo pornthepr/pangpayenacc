@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/layout/empty-state";
 import { createClient } from "@/lib/supabase/server";
 import { formatMoney } from "@/lib/format/money";
-import { formatThaiDateLong, bangkokMonthBounds, adjacentMonthKeys } from "@/lib/format/date";
+import { formatThaiMonthYear, bangkokMonthBounds, adjacentMonthKeys } from "@/lib/format/date";
 import { MonthlySummaryStat } from "@/components/charts/monthly-summary-stat";
 import { TrendChart } from "@/components/charts/trend-chart";
 
@@ -17,7 +17,7 @@ export default async function DashboardPage({
   const { month } = await searchParams;
   const { from, to } = bangkokMonthBounds(month);
   const { prevKey, nextKey } = adjacentMonthKeys(from);
-  const label = formatThaiDateLong(from).split(" ").slice(1).join(" ");
+  const label = formatThaiMonthYear(from);
 
   const supabase = await createClient();
   // Trend chart always shows the last 6 real calendar months, independent of
@@ -34,6 +34,8 @@ export default async function DashboardPage({
     { data: trend },
     { data: recentTransactions },
     { data: categories },
+    { data: earliestTransaction },
+    { data: carryForwardRaw },
   ] = await Promise.all([
     supabase.from("accounts").select("*").eq("is_archived", false).order("sort_order"),
     supabase.from("v_account_balances").select("*"),
@@ -46,6 +48,13 @@ export default async function DashboardPage({
       .order("created_at", { ascending: false })
       .limit(5),
     supabase.from("categories").select("*"),
+    supabase
+      .from("transactions")
+      .select("occurred_on")
+      .order("occurred_on", { ascending: true })
+      .limit(1)
+      .maybeSingle(),
+    supabase.rpc("rpc_balance_before", { p_date: from }),
   ]);
 
   const balanceByAccountId = new Map((balances ?? []).map((b) => [b.account_id, b.balance]));
@@ -56,6 +65,9 @@ export default async function DashboardPage({
     0
   );
   const thisMonth = monthSummary?.[0] ?? { income: 0, expense: 0 };
+  const carryForward = carryForwardRaw ?? 0;
+  const firstMonthKey = earliestTransaction?.occurred_on.slice(0, 7);
+  const isFirstMonth = !firstMonthKey || from.slice(0, 7) <= firstMonthKey;
 
   return (
     <div className="flex flex-col gap-4 p-4">
@@ -101,11 +113,17 @@ export default async function DashboardPage({
           </div>
 
           <div className="flex items-center justify-between">
-            <Button variant="ghost" size="icon-sm" asChild>
-              <Link href={`/?month=${prevKey}`}>
+            {isFirstMonth ? (
+              <Button variant="ghost" size="icon-sm" disabled>
                 <ChevronLeft className="size-4" />
-              </Link>
-            </Button>
+              </Button>
+            ) : (
+              <Button variant="ghost" size="icon-sm" asChild>
+                <Link href={`/?month=${prevKey}`}>
+                  <ChevronLeft className="size-4" />
+                </Link>
+              </Button>
+            )}
             <p className="font-medium">{label}</p>
             <Button variant="ghost" size="icon-sm" asChild>
               <Link href={`/?month=${nextKey}`}>
@@ -114,7 +132,12 @@ export default async function DashboardPage({
             </Button>
           </div>
 
-          <MonthlySummaryStat income={thisMonth.income} expense={thisMonth.expense} />
+          <MonthlySummaryStat
+            carryForward={carryForward}
+            carryForwardLabel={isFirstMonth ? "ยอดเริ่มต้น" : "ยกยอดจากเดือนก่อน"}
+            income={thisMonth.income}
+            expense={thisMonth.expense}
+          />
 
           <div className="flex flex-col gap-2">
             <h2 className="font-medium">แนวโน้มรับ-จ่าย</h2>

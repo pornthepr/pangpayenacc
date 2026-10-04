@@ -4,7 +4,7 @@
 //
 // Usage: pnpm seed:users
 // Requires (in .env.local): NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SECRET_KEY
-// Optional per-user password override: SEED_PASSWORD_GOLF / SEED_PASSWORD_GAP / SEED_PASSWORD_GROUP
+// Optional per-user password override: SEED_PASSWORD_GOLF / SEED_PASSWORD_GAP / SEED_PASSWORD_GROUP / SEED_PASSWORD_MOM
 
 import { createClient } from "@supabase/supabase-js";
 import { APP_USERS } from "../lib/constants/profiles";
@@ -14,6 +14,7 @@ const DEFAULT_PASSWORDS: Record<string, string> = {
   golf: "golf1234",
   gap: "gap1234",
   group: "group1234",
+  mom: "111111",
 };
 
 function requireEnv(name: string): string {

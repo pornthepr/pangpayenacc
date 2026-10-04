@@ -1,4 +1,4 @@
-import { bangkokMonthBounds } from "./date";
+import { bangkokMonthBounds, formatThaiMonthYear } from "./date";
 
 export const PERIOD_PRESETS = [
   "this_month",
@@ -53,4 +53,14 @@ export function resolvePeriod(
     case "custom":
       return custom ?? today;
   }
+}
+
+// "เดือนนี้"/"เดือนก่อน" read as the actual resolved month name (e.g.
+// "ตุลาคม 2569") per request — the other presets keep their generic label
+// since they span more than one month.
+export function periodChipLabel(preset: PeriodPreset): string {
+  if (preset === "this_month" || preset === "last_month") {
+    return formatThaiMonthYear(resolvePeriod(preset).from);
+  }
+  return periodPresetLabels[preset];
 }

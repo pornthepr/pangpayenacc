@@ -59,6 +59,13 @@ export function formatThaiDateLong(date: Date | string): string {
   return `${format(d, "d MMMM", { locale: th })} ${toBuddhistYear(d.getFullYear())}`;
 }
 
+// "ตุลาคม 2569" — month + Buddhist year, no day. `date` is typically a
+// month's first-of-month string (e.g. from bangkokMonthBounds().from).
+export function formatThaiMonthYear(date: Date | string): string {
+  const d = toBangkokWallClock(parse(date));
+  return `${format(d, "MMMM", { locale: th })} ${toBuddhistYear(d.getFullYear())}`;
+}
+
 export function formatThaiTime(date: Date | string): string {
   const d = toBangkokWallClock(parse(date));
   return format(d, "HH:mm");

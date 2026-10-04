@@ -146,21 +146,26 @@ export function TransactionDetailClient({
         </div>
       ) : null}
 
-      <div className="flex flex-col gap-2">
-        <h2 className="text-sm font-medium text-muted-foreground">ประวัติการแก้ไข</h2>
-        <div className="flex flex-col gap-3 rounded-xl border p-3">
-          {timeline.map((entry) => (
-            <div key={entry.id} className="text-sm">
-              <p>
-                {entry.descriptions.join(" · ")} โดย {entry.actorName}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {formatThaiDateLong(entry.at)} {formatThaiTime(entry.at)}
-              </p>
-            </div>
-          ))}
+      {/* RLS restricts audit_logs to "gap" only — timeline is simply empty
+          (not an error) for everyone else, so this section just disappears
+          for them rather than showing an empty box. */}
+      {timeline.length > 0 ? (
+        <div className="flex flex-col gap-2">
+          <h2 className="text-sm font-medium text-muted-foreground">ประวัติการแก้ไข</h2>
+          <div className="flex flex-col gap-3 rounded-xl border p-3">
+            {timeline.map((entry) => (
+              <div key={entry.id} className="text-sm">
+                <p>
+                  {entry.descriptions.join(" · ")} โดย {entry.actorName}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {formatThaiDateLong(entry.at)} {formatThaiTime(entry.at)}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      ) : null}
 
       <div className="flex gap-2">
         <Button

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { PERIOD_PRESETS, periodPresetLabels, type PeriodPreset } from "@/lib/format/period";
+import { PERIOD_PRESETS, periodChipLabel, type PeriodPreset } from "@/lib/format/period";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 
@@ -43,7 +43,7 @@ export function PeriodSelector() {
               period === preset ? "border-foreground bg-accent font-medium" : "border-border"
             )}
           >
-            {periodPresetLabels[preset]}
+            {periodChipLabel(preset)}
           </button>
         ))}
       </div>
