@@ -11,6 +11,7 @@ import { formatMoney } from "@/lib/format/money";
 import { formatThaiDateLong, formatThaiTime } from "@/lib/format/date";
 import { getSignedAttachmentUrls } from "@/lib/upload/attachments";
 import { transactionTypeLabels } from "@/lib/validation/transaction";
+import { buildAuditTimeline } from "@/lib/audit/build-timeline";
 import type { Database } from "@/lib/supabase/database.types";
 import { useAppData } from "@/components/transactions/app-data-context";
 import { softDeleteTransactionAction } from "../actions";
@@ -20,6 +21,7 @@ type Account = Database["public"]["Tables"]["accounts"]["Row"];
 type Category = Database["public"]["Tables"]["categories"]["Row"];
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 type Attachment = Database["public"]["Tables"]["attachments"]["Row"];
+type AuditLog = Database["public"]["Tables"]["audit_logs"]["Row"];
 
 export function TransactionDetailClient({
   transaction,
@@ -27,12 +29,14 @@ export function TransactionDetailClient({
   categories,
   profiles,
   attachments,
+  auditLogs,
 }: {
   transaction: Transaction;
   accounts: Account[];
   categories: Category[];
   profiles: Profile[];
   attachments: Attachment[];
+  auditLogs: AuditLog[];
 }) {
   const router = useRouter();
   const { quickAdd } = useAppData();
@@ -49,8 +53,10 @@ export function TransactionDetailClient({
   const category = categories.find((c) => c.id === transaction.category_id);
   const contributor = profiles.find((p) => p.id === transaction.contributor_profile_id);
   const beneficiary = profiles.find((p) => p.id === transaction.beneficiary_profile_id);
-  const createdBy = profiles.find((p) => p.id === transaction.created_by);
-  const updatedBy = profiles.find((p) => p.id === transaction.updated_by);
+  const accountsById = new Map(accounts.map((a) => [a.id, a]));
+  const categoriesById = new Map(categories.map((c) => [c.id, c]));
+  const profilesById = new Map(profiles.map((p) => [p.id, p]));
+  const timeline = buildAuditTimeline(auditLogs, accountsById, categoriesById, profilesById);
 
   const isIncome = transaction.type === "income";
   const isExpense = transaction.type === "expense";
@@ -140,17 +146,20 @@ export function TransactionDetailClient({
         </div>
       ) : null}
 
-      <div className="text-sm text-muted-foreground">
-        <p>
-          สร้างโดย {createdBy?.display_name ?? "?"} · {formatThaiDateLong(transaction.created_at)}{" "}
-          {formatThaiTime(transaction.created_at)}
-        </p>
-        {transaction.updated_at !== transaction.created_at ? (
-          <p>
-            แก้ไขล่าสุดโดย {updatedBy?.display_name ?? "?"} ·{" "}
-            {formatThaiDateLong(transaction.updated_at)} {formatThaiTime(transaction.updated_at)}
-          </p>
-        ) : null}
+      <div className="flex flex-col gap-2">
+        <h2 className="text-sm font-medium text-muted-foreground">ประวัติการแก้ไข</h2>
+        <div className="flex flex-col gap-3 rounded-xl border p-3">
+          {timeline.map((entry) => (
+            <div key={entry.id} className="text-sm">
+              <p>
+                {entry.descriptions.join(" · ")} โดย {entry.actorName}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {formatThaiDateLong(entry.at)} {formatThaiTime(entry.at)}
+              </p>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="flex gap-2">

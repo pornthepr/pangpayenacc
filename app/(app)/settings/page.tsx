@@ -9,11 +9,8 @@ import { LogoutButton } from "./logout-button";
 const LINKS = [
   { icon: Wallet, label: "จัดการบัญชี", href: "/settings/accounts" },
   { icon: Tags, label: "จัดการหมวดหมู่", href: "/settings/categories" },
-];
-
-const UPCOMING_ITEMS = [
-  { icon: Download, label: "ส่งออก CSV" },
-  { icon: Trash2, label: "ถังขยะ" },
+  { icon: Download, label: "ส่งออก CSV", href: "/transactions" },
+  { icon: Trash2, label: "ถังขยะ", href: "/settings/trash" },
 ];
 
 export default async function SettingsPage() {
@@ -61,16 +58,6 @@ export default async function SettingsPage() {
               <span>{label}</span>
               <ChevronRight className="ml-auto size-4 text-muted-foreground" />
             </Link>
-          ))}
-          {UPCOMING_ITEMS.map(({ icon: Icon, label }) => (
-            <div
-              key={label}
-              className="flex items-center gap-3 py-3 text-muted-foreground first:pt-0 last:pb-0"
-            >
-              <Icon className="size-5" />
-              <span>{label}</span>
-              <span className="ml-auto text-xs">เร็วๆ นี้</span>
-            </div>
           ))}
         </CardContent>
       </Card>

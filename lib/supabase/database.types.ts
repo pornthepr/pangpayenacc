@@ -189,6 +189,18 @@ export interface Database {
         Args: { p_id: string };
         Returns: undefined;
       };
+      restore_transaction: {
+        Args: { p_id: string };
+        Returns: undefined;
+      };
+      rpc_trash_transactions: {
+        Args: Record<string, never>;
+        Returns: Database["public"]["Tables"]["transactions"]["Row"][];
+      };
+      rpc_balance_before: {
+        Args: { p_date: string };
+        Returns: number;
+      };
       rpc_monthly_summary: {
         Args: { p_from: string; p_to: string };
         Returns: { month: string; income: number; expense: number; net: number }[];

@@ -10,14 +10,26 @@ export default async function TransactionDetailPage({
   const { id } = await params;
   const supabase = await createClient();
 
-  const [{ data: transaction }, { data: accounts }, { data: categories }, { data: profiles }, { data: attachments }] =
-    await Promise.all([
-      supabase.from("transactions").select("*").eq("id", id).maybeSingle(),
-      supabase.from("accounts").select("*"),
-      supabase.from("categories").select("*"),
-      supabase.from("profiles").select("*"),
-      supabase.from("attachments").select("*").eq("transaction_id", id),
-    ]);
+  const [
+    { data: transaction },
+    { data: accounts },
+    { data: categories },
+    { data: profiles },
+    { data: attachments },
+    { data: auditLogs },
+  ] = await Promise.all([
+    supabase.from("transactions").select("*").eq("id", id).maybeSingle(),
+    supabase.from("accounts").select("*"),
+    supabase.from("categories").select("*"),
+    supabase.from("profiles").select("*"),
+    supabase.from("attachments").select("*").eq("transaction_id", id),
+    supabase
+      .from("audit_logs")
+      .select("*")
+      .eq("table_name", "transactions")
+      .eq("record_id", id)
+      .order("at", { ascending: true }),
+  ]);
 
   if (!transaction) {
     notFound();
@@ -30,6 +42,7 @@ export default async function TransactionDetailPage({
       categories={categories ?? []}
       profiles={profiles ?? []}
       attachments={attachments ?? []}
+      auditLogs={auditLogs ?? []}
     />
   );
 }

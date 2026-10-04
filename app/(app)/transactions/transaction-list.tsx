@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { formatMoney } from "@/lib/format/money";
 import { formatThaiDateLong } from "@/lib/format/date";
+import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/lib/supabase/database.types";
 import { useAppData } from "@/components/transactions/app-data-context";
 import { TransactionRow } from "@/components/transactions/transaction-row";
@@ -26,6 +27,29 @@ export function TransactionList({ groups }: { groups: DayGroup[] }) {
   const accountsById = useMemo(() => new Map(accounts.map((a) => [a.id, a])), [accounts]);
   const categoriesById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
   const profilesById = useMemo(() => new Map(profiles.map((p) => [p.id, p])), [profiles]);
+
+  // "รายการใหม่จากคนอื่นขึ้นทันทีโดยไม่ต้องรีเฟรช" — re-fetch the server-rendered
+  // list whenever anyone changes a transaction, rather than reconciling the
+  // realtime payload into local state by hand. The channel name is generated
+  // *inside* the effect (not in a ref) so each effect invocation gets a truly
+  // distinct name — React's dev-mode double-invoke otherwise reuses the same
+  // ref value for both runs, and supabase-js's channel registry is keyed by
+  // name, so the first run's cleanup can tear down the second's live socket.
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`transactions-list-${crypto.randomUUID()}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "transactions" },
+        () => router.refresh()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [router]);
 
   async function handleDelete(transaction: Transaction) {
     const result = await softDeleteTransactionAction(transaction.id);
