@@ -1,0 +1,35 @@
+import type { IconName } from "lucide-react/dynamic";
+
+// Small curated subset of lucide icon names (not the full ~1500) so the picker
+// stays usable on a phone screen. Covers common account kinds + category themes.
+export const ICON_OPTIONS: IconName[] = [
+  "wallet",
+  "landmark",
+  "credit-card",
+  "smartphone",
+  "piggy-bank",
+  "banknote",
+  "coins",
+  "building-2",
+  "users",
+  "circle-plus",
+  "hammer",
+  "heart",
+  "briefcase",
+  "zap",
+  "cross",
+  "car",
+  "utensils",
+  "shopping-cart",
+  "graduation-cap",
+  "gift",
+  "plane",
+  "home",
+  "shirt",
+  "fuel",
+  "dog",
+  "baby",
+  "stethoscope",
+  "gamepad-2",
+  "more-horizontal",
+];
