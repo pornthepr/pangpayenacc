@@ -45,7 +45,7 @@ export function FiltersSheet() {
           ตัวกรอง{activeCount > 0 ? ` (${activeCount})` : ""}
         </Button>
       </SheetTrigger>
-      <SheetContent side="bottom" className="max-h-[92vh] overflow-y-auto">
+      <SheetContent side="bottom" className="max-h-[92dvh] overflow-y-auto">
         <SheetHeader>
           <SheetTitle>ตัวกรองรายการ</SheetTitle>
         </SheetHeader>

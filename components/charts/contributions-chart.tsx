@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Cell, ResponsiveContainer, LabelList } from "recharts";
 import { formatMoney } from "@/lib/format/money";
 import { formatCompactNumber } from "@/lib/format/chart";
+import { useMounted } from "@/lib/hooks/use-mounted";
 
 export interface ContributionRow {
   label: string;
@@ -21,11 +22,16 @@ export function ContributionsChart({
   to: string;
 }) {
   const router = useRouter();
+  const mounted = useMounted();
 
   if (data.length === 0) {
     return (
       <p className="py-8 text-center text-sm text-muted-foreground">ยังไม่มีข้อมูลในช่วงนี้</p>
     );
+  }
+
+  if (!mounted) {
+    return <div style={{ height: Math.max(data.length * 40, 120) }} className="w-full" />;
   }
 
   return (

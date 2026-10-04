@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import { formatMoney } from "@/lib/format/money";
 import type { BreakdownRow } from "@/lib/format/breakdown";
+import { useMounted } from "@/lib/hooks/use-mounted";
 
 export function CategoryPieChart({
   data,
@@ -17,6 +18,7 @@ export function CategoryPieChart({
   to: string;
 }) {
   const router = useRouter();
+  const mounted = useMounted();
 
   function handleClick(row: BreakdownRow) {
     const params = new URLSearchParams({ type, from, to });
@@ -33,38 +35,40 @@ export function CategoryPieChart({
   return (
     <div className="flex flex-col gap-2">
       <div className="h-40 w-full">
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie
-              data={data}
-              dataKey="amount"
-              nameKey="name"
-              innerRadius="45%"
-              outerRadius="90%"
-              paddingAngle={2}
-              onClick={(entry: { payload?: BreakdownRow }) =>
-                entry.payload && handleClick(entry.payload)
-              }
-              cursor="pointer"
-            >
-              {data.map((row) => (
-                <Cell key={row.categoryId ?? "other"} fill={row.color} stroke="var(--background)" />
-              ))}
-            </Pie>
-            <Tooltip
-              formatter={(value, _name, item) => [
-                `${formatMoney(Number(value))} (${(item.payload as BreakdownRow).percentage}%)`,
-                (item.payload as BreakdownRow).name,
-              ]}
-              contentStyle={{
-                backgroundColor: "var(--popover)",
-                border: "1px solid var(--border)",
-                borderRadius: 8,
-                fontSize: 13,
-              }}
-            />
-          </PieChart>
-        </ResponsiveContainer>
+        {mounted ? (
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={data}
+                dataKey="amount"
+                nameKey="name"
+                innerRadius="45%"
+                outerRadius="90%"
+                paddingAngle={2}
+                onClick={(entry: { payload?: BreakdownRow }) =>
+                  entry.payload && handleClick(entry.payload)
+                }
+                cursor="pointer"
+              >
+                {data.map((row) => (
+                  <Cell key={row.categoryId ?? "other"} fill={row.color} stroke="var(--background)" />
+                ))}
+              </Pie>
+              <Tooltip
+                formatter={(value, _name, item) => [
+                  `${formatMoney(Number(value))} (${(item.payload as BreakdownRow).percentage}%)`,
+                  (item.payload as BreakdownRow).name,
+                ]}
+                contentStyle={{
+                  backgroundColor: "var(--popover)",
+                  border: "1px solid var(--border)",
+                  borderRadius: 8,
+                  fontSize: 13,
+                }}
+              />
+            </PieChart>
+          </ResponsiveContainer>
+        ) : null}
       </div>
 
       <div className="flex flex-col gap-1">

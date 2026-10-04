@@ -4,8 +4,15 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { formatMoney } from "@/lib/format/money";
 import { formatCompactNumber } from "@/lib/format/chart";
 import { formatThaiDateShort } from "@/lib/format/date";
+import { useMounted } from "@/lib/hooks/use-mounted";
 
 export function DailyBalanceChart({ data }: { data: { day: string; balance: number }[] }) {
+  const mounted = useMounted();
+
+  if (!mounted) {
+    return <div className="h-56 w-full rounded-xl border p-2" />;
+  }
+
   return (
     <div className="h-56 w-full rounded-xl border p-2">
       <ResponsiveContainer width="100%" height="100%">

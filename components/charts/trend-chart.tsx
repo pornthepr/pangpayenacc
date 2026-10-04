@@ -15,6 +15,7 @@ import {
 import { formatCompactNumber } from "@/lib/format/chart";
 import { formatMoney } from "@/lib/format/money";
 import { CHART_COLORS } from "@/lib/format/chart";
+import { useMounted } from "@/lib/hooks/use-mounted";
 
 interface MonthRow {
   month: string;
@@ -31,6 +32,7 @@ function monthLabel(iso: string) {
 
 export function TrendChart({ data }: { data: MonthRow[] }) {
   const router = useRouter();
+  const mounted = useMounted();
 
   function drillDown(month: string, type: "income" | "expense") {
     // Pure y/m arithmetic — no Date/timezone conversion, so this can't shift
@@ -39,6 +41,10 @@ export function TrendChart({ data }: { data: MonthRow[] }) {
     const daysInMonth = new Date(Date.UTC(year, mon, 0)).getUTCDate();
     const to = `${year}-${String(mon).padStart(2, "0")}-${String(daysInMonth).padStart(2, "0")}`;
     router.push(`/transactions?type=${type}&from=${month.slice(0, 10)}&to=${to}`);
+  }
+
+  if (!mounted) {
+    return <div className="h-64 w-full rounded-xl border p-2" />;
   }
 
   return (

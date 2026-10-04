@@ -39,6 +39,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# claude code local state
+/.claude/
+
 # supabase
 /supabase/.temp
 /supabase/.branches

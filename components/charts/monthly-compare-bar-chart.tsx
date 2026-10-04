@@ -13,6 +13,7 @@ import {
 } from "recharts";
 import { formatCompactNumber, CHART_COLORS } from "@/lib/format/chart";
 import { formatMoney } from "@/lib/format/money";
+import { useMounted } from "@/lib/hooks/use-mounted";
 
 export interface MonthCompareRow {
   month: string; // "yyyy-MM-01"
@@ -29,6 +30,7 @@ function monthLabel(iso: string) {
 
 export function MonthlyCompareBarChart({ data }: { data: MonthCompareRow[] }) {
   const router = useRouter();
+  const mounted = useMounted();
 
   function drillDown(month: string, type: "income" | "expense") {
     const [year, mon] = month.slice(0, 7).split("-").map(Number);
@@ -40,56 +42,58 @@ export function MonthlyCompareBarChart({ data }: { data: MonthCompareRow[] }) {
   return (
     <div className="flex flex-col gap-2">
       <div className="h-56 w-full rounded-xl border p-2">
-        <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-            <CartesianGrid vertical={false} strokeDasharray="0" stroke="var(--border)" />
-            <XAxis
-              dataKey="month"
-              tickFormatter={monthLabel}
-              tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
-              axisLine={{ stroke: "var(--border)" }}
-              tickLine={false}
-            />
-            <YAxis
-              tickFormatter={formatCompactNumber}
-              tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
-              axisLine={false}
-              tickLine={false}
-              width={40}
-            />
-            <Tooltip
-              formatter={(value) => formatMoney(Number(value))}
-              labelFormatter={(label) => monthLabel(String(label))}
-              contentStyle={{
-                backgroundColor: "var(--popover)",
-                border: "1px solid var(--border)",
-                borderRadius: 8,
-                fontSize: 13,
-              }}
-            />
-            <Legend formatter={(value) => (value === "income" ? "รับ" : "จ่าย")} />
-            <Bar
-              dataKey="income"
-              fill={CHART_COLORS.income}
-              radius={[4, 4, 0, 0]}
-              maxBarSize={56}
-              onClick={(entry: { payload?: MonthCompareRow }) =>
-                entry.payload && drillDown(entry.payload.month, "income")
-              }
-              cursor="pointer"
-            />
-            <Bar
-              dataKey="expense"
-              fill={CHART_COLORS.expense}
-              radius={[4, 4, 0, 0]}
-              maxBarSize={56}
-              onClick={(entry: { payload?: MonthCompareRow }) =>
-                entry.payload && drillDown(entry.payload.month, "expense")
-              }
-              cursor="pointer"
-            />
-          </ComposedChart>
-        </ResponsiveContainer>
+        {mounted ? (
+          <ResponsiveContainer width="100%" height="100%">
+            <ComposedChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+              <CartesianGrid vertical={false} strokeDasharray="0" stroke="var(--border)" />
+              <XAxis
+                dataKey="month"
+                tickFormatter={monthLabel}
+                tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
+                axisLine={{ stroke: "var(--border)" }}
+                tickLine={false}
+              />
+              <YAxis
+                tickFormatter={formatCompactNumber}
+                tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
+                axisLine={false}
+                tickLine={false}
+                width={40}
+              />
+              <Tooltip
+                formatter={(value) => formatMoney(Number(value))}
+                labelFormatter={(label) => monthLabel(String(label))}
+                contentStyle={{
+                  backgroundColor: "var(--popover)",
+                  border: "1px solid var(--border)",
+                  borderRadius: 8,
+                  fontSize: 13,
+                }}
+              />
+              <Legend formatter={(value) => (value === "income" ? "รับ" : "จ่าย")} />
+              <Bar
+                dataKey="income"
+                fill={CHART_COLORS.income}
+                radius={[4, 4, 0, 0]}
+                maxBarSize={56}
+                onClick={(entry: { payload?: MonthCompareRow }) =>
+                  entry.payload && drillDown(entry.payload.month, "income")
+                }
+                cursor="pointer"
+              />
+              <Bar
+                dataKey="expense"
+                fill={CHART_COLORS.expense}
+                radius={[4, 4, 0, 0]}
+                maxBarSize={56}
+                onClick={(entry: { payload?: MonthCompareRow }) =>
+                  entry.payload && drillDown(entry.payload.month, "expense")
+                }
+                cursor="pointer"
+              />
+            </ComposedChart>
+          </ResponsiveContainer>
+        ) : null}
       </div>
 
       {/* Closing balance spans a far larger magnitude than a single month's

@@ -53,7 +53,7 @@ export function AccountFormSheet({
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>{trigger}</SheetTrigger>
-      <SheetContent side="bottom" className="max-h-[90vh] overflow-y-auto">
+      <SheetContent side="bottom" className="max-h-[90dvh] overflow-y-auto">
         <SheetHeader>
           <SheetTitle>{account ? "แก้ไขบัญชี" : "สร้างบัญชีใหม่"}</SheetTitle>
         </SheetHeader>

@@ -39,7 +39,7 @@ export function QuickAddSheet() {
 
   return (
     <Sheet open={quickAdd.open} onOpenChange={(next) => !next && quickAdd.close()}>
-      <SheetContent side="bottom" className="max-h-[92vh] overflow-y-auto">
+      <SheetContent side="bottom" className="max-h-[92dvh] overflow-y-auto">
         {quickAdd.open ? <QuickAddForm key={formKey} /> : null}
       </SheetContent>
     </Sheet>
